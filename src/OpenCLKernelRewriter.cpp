@@ -146,9 +146,11 @@ public:
                     kernelInfoBuilder << "    pointer: false\n";
                     kernelInfoBuilder << "    size: 1\n";
                 }
-                kernelInfoBuilder << "    random: unset\n";
+                kernelInfoBuilder << "    fuzzing: unset\n";
                 kernelInfoBuilder << "    initial_value: unset\n";
                 kernelInfoBuilder << "    init_file: unset\n";
+                kernelInfoBuilder << "    result: unset\n";
+                kernelInfoBuilder << "    pos: " << i << "\n";
             }
         }
         return true;
