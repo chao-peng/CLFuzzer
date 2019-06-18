@@ -192,7 +192,7 @@ public:
             fileWriter << "Cov: false\n";
         }
         fileWriter << "Barriers: " << countBarriers << "\n";
-        fileWriter << "Branches: " << countConditions << "\n";
+        fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
 
         fileWriter << kernelInfoBuilder.str();
