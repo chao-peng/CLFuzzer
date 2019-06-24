@@ -191,6 +191,8 @@ public:
         } else {
             fileWriter << "Cov: false\n";
         }
+        fileWriter << "global: [0, 0, 0]\n";
+        fileWriter << "local: [0, 0, 0]\n";
         fileWriter << "Barriers: " << countBarriers << "\n";
         fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
