@@ -193,6 +193,7 @@ public:
         }
         fileWriter << "global: [0, 0, 0]\n";
         fileWriter << "local: [0, 0, 0]\n";
+        fileWriter << "dim: 0\n"
         fileWriter << "Barriers: " << countBarriers << "\n";
         fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
