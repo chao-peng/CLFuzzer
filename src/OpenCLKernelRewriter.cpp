@@ -82,10 +82,12 @@ public:
         SourceLocation locStart, locEnd;
         SourceRange sr;
         locStart = f->getBeginLoc();
-        locEnd = f->getBeginLoc().getLocWithOffset(8);
+        locEnd = f->getEndLoc();
         sr.setBegin(locStart);
         sr.setEnd(locEnd);
         std::string typeString = myRewriter.getRewrittenText(sr);
+        typeString = typeString.substr(0, 8);
+        std::cout << "typestr " << typeString << "\n";
         if (typeString.find("kernel") == typeString.npos){
             setFunctions.insert(f->getQualifiedNameAsString());
             
@@ -193,7 +195,7 @@ public:
         }
         fileWriter << "global: [0, 0, 0]\n";
         fileWriter << "local: [0, 0, 0]\n";
-        fileWriter << "dim: 0\n"
+        fileWriter << "dim: 0\n";
         fileWriter << "Barriers: " << countBarriers << "\n";
         fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
