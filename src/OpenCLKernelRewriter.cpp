@@ -22,14 +22,12 @@
 #include "OpenCLKernelRewriter.h"
 #include "Constants.h"
 #include "UserConfig.h"
-#include "HostCodeGenerator.h"
 #include "Utils.h"
 
 using namespace clang;
 using namespace clang::tooling;
 
 std::string outputFileName;
-std::string outputDirectory;
 std::string configFileName;
 std::string kernelSourceFile;
 int numAddedLines;
@@ -49,9 +47,6 @@ std::map<int, std::string> LoopMap;
 
 std::stringstream kernelInfoBuilder;
 bool measureCoverageEnabled;
-
-// Variables below are used to generate host code
-HostCodeGenerator hostCodeGenerator;
 
 // First AST visitor: counting if-conditions and user-defined functions
 class RecursiveASTVisitorForKernelInvastigator : public RecursiveASTVisitor<RecursiveASTVisitorForKernelInvastigator> {
@@ -87,7 +82,6 @@ public:
         sr.setEnd(locEnd);
         std::string typeString = myRewriter.getRewrittenText(sr);
         typeString = typeString.substr(0, 8);
-        std::cout << "typestr " << typeString << "\n";
         if (typeString.find("kernel") == typeString.npos){
             setFunctions.insert(f->getQualifiedNameAsString());
             
@@ -186,16 +180,16 @@ public:
 
     void EndSourceFileAction() override {
         std::ofstream fileWriter;
-        std::string YAMLFileName = outputDirectory + kernelSourceFile.substr(kernelSourceFile.find_last_of("/") + 1, kernelSourceFile.size() - kernelSourceFile.find_last_of("/") - 1) + ".yaml";
+        std::string YAMLFileName = kernelSourceFile.substr(kernelSourceFile.find_last_of("/") + 1, kernelSourceFile.size() - kernelSourceFile.find_last_of("/") - 1) + ".yaml";
         fileWriter.open(YAMLFileName);
         if (measureCoverageEnabled) {
             fileWriter << "Cov: true\n";
         } else {
             fileWriter << "Cov: false\n";
         }
-        fileWriter << "global: [0, 0, 0]\n";
-        fileWriter << "local: [0, 0, 0]\n";
-        fileWriter << "dim: 0\n";
+        fileWriter << "global: [1, 1, 1]\n";
+        fileWriter << "local: [1, 1, 1]\n";
+        fileWriter << "dim: 1\n";
         fileWriter << "Barriers: " << countBarriers << "\n";
         fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
@@ -522,7 +516,6 @@ public:
 
                 // Host code generator part 2: Set argument
                 int argumentLocation = f->param_size();
-                hostCodeGenerator.setArgument(functionName, argumentLocation);
 
             }
             else {
@@ -775,7 +768,6 @@ public:
         
         // Write data file
         std::string dataFileName = outputFileName + ".dat";
-        hostCodeGenerator.generateHostCode(dataFileName);
         std::stringstream outputBuffer;
         fileWriter.open(dataFileName);
         for (int i = 0; i < numConditions; i++){
@@ -803,7 +795,8 @@ public:
     virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &ci, 
         StringRef file) override {
             std::string inputFileName = file.str();
-            outputFileName = outputFileName.append(inputFileName.substr(inputFileName.find_last_of("/") + 1, inputFileName.size() - inputFileName.find_last_of("/") - 1));
+            outputFileName = inputFileName.substr(0, inputFileName.find_last_of("."));
+            outputFileName = outputFileName + "_cov.cl";
             myRewriter.setSourceMgr(ci.getSourceManager(), ci.getLangOpts());
             originalRewriter.setSourceMgr(ci.getSourceManager(), ci.getLangOpts());
             return llvm::make_unique<ASTConsumerForKernelRewriter>(myRewriter, originalRewriter, &ci.getASTContext());
@@ -815,7 +808,7 @@ private:
     // need original rewriter to retrieve correct text from original code
 };
 
-int rewriteOpenclKernel(ClangTool* tool, std::string newOutputDirectory, UserConfig* userConfig, const bool& measureCoverage) {
+int rewriteOpenclKernel(ClangTool* tool, UserConfig* userConfig) {
     numConditions = 0;
     countConditions = 0;
     countBarriers = 0;
@@ -823,37 +816,14 @@ int rewriteOpenclKernel(ClangTool* tool, std::string newOutputDirectory, UserCon
     numLoops = 0;
     countLoops = 0;
     numAddedLines = userConfig->getNumAddedLines();
-    outputDirectory = newOutputDirectory;
-    outputFileName = newOutputDirectory;
-    measureCoverageEnabled = measureCoverage;
 
-    if (measureCoverage) {
-        llvm::outs() << "Stage 1/2: code invastigation\n";
-        tool->run(newFrontendActionFactory<ASTFrontendActionForKernelInvastigator>().get());    
+    // llvm::outs() << "Stage 1/2: code invastigation\n";
+    tool->run(newFrontendActionFactory<ASTFrontendActionForKernelInvastigator>().get());    
+    
+    // llvm::outs() << "Stage 2/2: generate code\n";
+    tool->run(newFrontendActionFactory<ASTFrontendActionForKernelRewriter>().get());
 
-        if (countConditions == 0 && countBarriers == 0 && countLoops == 0){
-            return error_code::NO_NEED_TO_TEST_COVERAGE;
-        }
 
-        hostCodeGenerator.initialise(userConfig, countConditions, countBarriers, countLoops);
-        
-        llvm::outs() << "Stage 2/2: generate code\n";
-        tool->run(newFrontendActionFactory<ASTFrontendActionForKernelRewriter>().get());
-
-        if (hostCodeGenerator.isHostCodeComplete()){
-            std::cout << "\x1B[32mReferable host code has been written in the output directory\x1B[0m\n";
-            std::string hostCodeFile = outputDirectory + "hostcode.txt";
-            std::ofstream hostCodeWriter(hostCodeFile);
-            hostCodeWriter << hostCodeGenerator.getGeneratedHostCode();
-            hostCodeWriter.close();
-        }
-
-        std::cout << "num of loops: " << countLoops << std::endl;
-
-        return error_code::STATUS_OK;
-    } else {
-        llvm::outs() << "Performing code invastigation\n";
-        tool->run(newFrontendActionFactory<ASTFrontendActionForKernelInvastigator>().get());    
-        return error_code::STATUS_OK;
-    }
+    return error_code::STATUS_OK;
+    
 }

@@ -8,5 +8,5 @@
 #include "UserConfig.h"
 
 
-int rewriteOpenclKernel(clang::tooling::ClangTool* tool, std::string newOutputFileName, UserConfig* userconfig, const bool& measureCoverage);
+int rewriteOpenclKernel(clang::tooling::ClangTool* tool, UserConfig* userconfig);
 #endif

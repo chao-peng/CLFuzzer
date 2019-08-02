@@ -14,25 +14,11 @@
 
 static llvm::cl::OptionCategory ToolCategory("OpenCL kernel branch coverage checker options");
 
-static llvm::cl::opt<std::string> outputDirectory(
-    "o",
-    llvm::cl::desc("Specify the output directory"),
-    llvm::cl::value_desc("directory"),
-    llvm::cl::Required
-);
-
 static llvm::cl::opt<std::string> userConfigFileName(
     "config",
     llvm::cl::desc("Specify the user config file name"),
     llvm::cl::value_desc("filename"),
     llvm::cl::Optional // Will be empty string if not specified
-);
-
-static llvm::cl::opt<bool> measureCoverageOption(
-    "cov",
-    llvm::cl::desc("Enable coverage measurement code instrumentation"),
-    llvm::cl::value_desc("boolean"),
-    llvm::cl::Optional
 );
 
 int main(int argc, const char** argv){
@@ -43,24 +29,10 @@ int main(int argc, const char** argv){
 
     UserConfig userConfig(userConfigFileName.c_str());
     userConfig.generateFakeHeader(kernelFileName);
-    bool measureCoverage = measureCoverageOption;
 
     clang::tooling::ClangTool tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
-    std::string directory(outputDirectory.c_str());
-    if (directory.at(directory.size() - 1) != '/') directory.append("/");
-    int status = rewriteOpenclKernel(&tool, directory, &userConfig, measureCoverage);
-
-    if (measureCoverage) {
-        if (status == error_code::NO_NEED_TO_TEST_COVERAGE){
-            std::cout << "\x1B[31mNo branch or barrier found in this kernel. The tool will do nothing.\x1B[0m\n";
-        } else {
-            std::cout << "\x1B[32mDone. Please find rewritten kernel code in the output directory.\x1B[0m\n";
-        }
-    } else {
-        std::cout << "\x1B[32mDone.\x1B[0m\n";
-    }
-
+    int status = rewriteOpenclKernel(&tool, &userConfig);
 
     UserConfig::removeFakeHeader(kernelFileName);
 }
