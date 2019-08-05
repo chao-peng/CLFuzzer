@@ -86,6 +86,7 @@ public:
             setFunctions.insert(f->getQualifiedNameAsString());
             
         } else { // is a kernel function
+            kernelInfoBuilder << "num_parameters: " << f->getNumParams() << "\n";
             kernelInfoBuilder << f->getQualifiedNameAsString() << ":\n";
             for (unsigned int i = 0; i < f->getNumParams(); ++i) {
                 auto parameter = f->getParamDecl(i);
