@@ -194,6 +194,7 @@ public:
         fileWriter << "Barriers: " << countBarriers << "\n";
         fileWriter << "Branches: " << countConditions * 2 << "\n";
         fileWriter << "Loops: " << countLoops << "\n";
+        fileWriter << "structure_data_filename: " << outputFileName + ".dat" << "\n";
 
         fileWriter << kernelInfoBuilder.str();
         fileWriter.close();
@@ -202,6 +203,9 @@ public:
     virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &ci, 
         StringRef file) override {
             kernelSourceFile = file.str();
+            std::string inputFileName = file.str();
+            outputFileName = inputFileName.substr(0, inputFileName.find_last_of("."));
+            outputFileName = outputFileName + "_cov.cl";
             //if (!UserConfig::hasFakeHeader(kernelSourceFile)){
             //    numAddedLines = UserConfig::generateFakeHeader(configFileName, kernelSourceFile);
             //}
