@@ -19,6 +19,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/LLVM.h"
 
+#include "CFGGenerator.h"
 #include "OpenCLKernelRewriter.h"
 #include "Constants.h"
 #include "UserConfig.h"
@@ -149,6 +150,8 @@ public:
                 kernelInfoBuilder << "    result: unset\n";
                 kernelInfoBuilder << "    pos: " << i << "\n";
             }
+            CFGNodePtr cfg = handleFunctionDefinition(f, &myRewriter);
+            cfg->dump();      
         }
         return true;
     }

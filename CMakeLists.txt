@@ -3,6 +3,8 @@ set(LLVM_LINK_COMPONENTS
 )
         
 add_clang_executable(clfuzzer
+    src/CFGGenerator.cpp
+    src/CFGGenerator.h
     src/Constants.h
     src/HostCodeGenerator.cpp
     src/HostCodeGenerator.h
