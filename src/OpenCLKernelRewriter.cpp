@@ -88,6 +88,7 @@ public:
             
         } else { // is a kernel function
             kernelInfoBuilder << "num_parameters: " << f->getNumParams() << "\n";
+            kernelInfoBuilder << "kernel_name: " << f->getQualifiedNameAsString() << "\n";
             kernelInfoBuilder << f->getQualifiedNameAsString() << ":\n";
             for (unsigned int i = 0; i < f->getNumParams(); ++i) {
                 auto parameter = f->getParamDecl(i);
@@ -144,10 +145,10 @@ public:
                     kernelInfoBuilder << "    pointer: false\n";
                     kernelInfoBuilder << "    size: 1\n";
                 }
-                kernelInfoBuilder << "    fuzzing: unset\n";
+                kernelInfoBuilder << "    fuzzing: random\n";
                 kernelInfoBuilder << "    initial_value: unset\n";
                 kernelInfoBuilder << "    init_file: unset\n";
-                kernelInfoBuilder << "    result: unset\n";
+                kernelInfoBuilder << "    result: false\n";
                 kernelInfoBuilder << "    pos: " << i << "\n";
             }
             CFGNodePtr cfg = handleFunctionDefinition(f, &myRewriter);
